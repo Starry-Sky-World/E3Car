@@ -1,0 +1,10 @@
+node_modules
+.next
+.env
+*.sqlite
+*.db
+*.db-journal
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+.DS_Store
