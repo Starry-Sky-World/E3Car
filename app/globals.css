@@ -13,3 +13,39 @@ body {
 input, button, textarea, select {
   font: inherit;
 }
+
+@layer components {
+  .card {
+    @apply bg-white shadow rounded border border-gray-100;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900 hover:bg-gray-300;
+  }
+  .btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  .input {
+    @apply w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200;
+  }
+  .select {
+    @apply w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200;
+  }
+  .heading {
+    @apply text-3xl font-bold text-gray-900;
+  }
+  .subheading {
+    @apply text-xl font-semibold text-gray-900;
+  }
+  .link {
+    @apply text-blue-700 underline hover:text-blue-800;
+  }
+}
