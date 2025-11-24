@@ -30,6 +30,7 @@ type Invite = {
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
+  const [activeTab, setActiveTab] = useState<"config" | "invites">("config");
   const [config, setConfig] = useState<ConfigResponse | null>(null);
   const [configForm, setConfigForm] = useState({
     clientId: "",
@@ -283,73 +284,99 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-8 px-4 py-6 sm:px-0">
-      <h1 className="text-3xl font-bold">Admin Panel</h1>
+      <h1 className="heading">管理后台</h1>
 
       {!authed && (
         <form
           onSubmit={handleLogin}
-          className="bg-white shadow p-6 rounded space-y-4 max-w-md mx-auto border border-gray-100"
+          className="card p-6 space-y-4 max-w-md mx-auto"
         >
           <div>
-            <label className="block text-sm font-medium mb-1">后台密码</label>
+            <label htmlFor="adminPassword" className="block text-sm font-medium mb-1">后台密码</label>
             <input
+              id="adminPassword"
               type="password"
-              className="w-full border rounded px-3 py-2"
+              className="input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            className="btn btn-primary w-full"
             disabled={loading}
+            aria-busy={loading}
           >
             登录
           </button>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {message && <p className="text-green-600 text-sm">{message}</p>}
+          {error && <p className="text-red-600 text-sm" role="alert" aria-live="polite">{error}</p>}
+          {message && <p className="text-green-600 text-sm" role="status" aria-live="polite">{message}</p>}
         </form>
       )}
 
       {authed && (
         <>
-          {error && <div className="p-3 bg-red-100 text-red-700 rounded">{error}</div>}
+          <div className="card p-2 sm:p-3 flex items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              className={`btn ${activeTab === "config" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setActiveTab("config")}
+            >
+              配置与授权
+            </button>
+            <button
+              type="button"
+              className={`btn ${activeTab === "invites" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setActiveTab("invites")}
+            >
+              兑换码管理
+            </button>
+          </div>
+          {error && (
+            <div className="p-3 bg-red-100 text-red-700 rounded" role="alert" aria-live="polite">
+              {error}
+            </div>
+          )}
           {(message || copyMessage) && (
-            <div className="p-3 bg-green-100 text-green-700 rounded space-y-1">
+            <div className="p-3 bg-green-100 text-green-700 rounded space-y-1" role="status" aria-live="polite">
               {message && <div>{message}</div>}
               {copyMessage && <div className="text-sm">{copyMessage}</div>}
             </div>
           )}
 
-          <section className="bg-white shadow p-6 rounded">
+          {activeTab === "config" && (
+          <section className="card p-6">
             <h2 className="text-xl font-semibold mb-4">Graph 应用配置</h2>
             <form className="space-y-4" onSubmit={handleSaveConfig}>
               <div>
-                <label className="block text-sm font-medium mb-1">Client ID</label>
+                <label htmlFor="clientId" className="block text-sm font-medium mb-1">Client ID</label>
                 <input
-                  className="w-full border rounded px-3 py-2"
+                  className="input"
                   value={configForm.clientId}
                   onChange={(e) => setConfigForm({ ...configForm, clientId: e.target.value })}
+                  id="clientId"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Client Secret</label>
+                <label htmlFor="clientSecret" className="block text-sm font-medium mb-1">Client Secret</label>
                 <input
                   type="password"
-                  className="w-full border rounded px-3 py-2"
+                  className="input"
                   value={configForm.clientSecret}
                   onChange={(e) =>
                     setConfigForm({ ...configForm, clientSecret: e.target.value })
                   }
+                  id="clientSecret"
                 />
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">自动分配 SKU</label>
+                  <label htmlFor="licenseSkuId" className="block text-sm font-medium mb-1">自动分配 SKU</label>
                   <select
-                    className="w-full border rounded px-3 py-2"
+                    className="select"
                     value={configForm.licenseSkuId}
                     onChange={(e) => setConfigForm({ ...configForm, licenseSkuId: e.target.value })}
+                    id="licenseSkuId"
                   >
                     <option value="">不自动分配</option>
                     {skus.map((sku) => (
@@ -364,9 +391,10 @@ export default function AdminPage() {
                 </div>
                 <button
                   type="button"
-                  className="whitespace-nowrap bg-gray-200 px-3 py-2 rounded text-sm"
+                  className="btn btn-secondary whitespace-nowrap"
                   onClick={handleFetchSkus}
                   disabled={loadingSkus || !config?.token}
+                  aria-busy={loadingSkus}
                 >
                   {loadingSkus ? "加载中..." : "拉取 SKU"}
                 </button>
@@ -374,14 +402,15 @@ export default function AdminPage() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full sm:w-auto"
+                  className="btn btn-primary w-full sm:w-auto"
                   disabled={loading}
+                  aria-busy={loading}
                 >
                   保存配置
                 </button>
                 <a
                   href="/api/admin/oauth/authorize"
-                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-center w-full sm:w-auto"
+                  className="btn bg-purple-600 hover:bg-purple-700 text-white text-center w-full sm:w-auto"
                 >
                   前往管理员授权
                 </a>
@@ -401,8 +430,10 @@ export default function AdminPage() {
               )}
             </form>
           </section>
+          )}
 
-          <section className="bg-white shadow p-6 rounded space-y-4">
+          {activeTab === "invites" && (
+          <section className="card p-6 space-y-4">
             <h2 className="text-xl font-semibold">兑换码管理</h2>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <form className="grid gap-3 sm:flex sm:items-end sm:gap-3" onSubmit={handleCreateCodes}>
@@ -410,27 +441,27 @@ export default function AdminPage() {
                   <label className="block text-sm font-medium mb-1">批量创建数量</label>
                   <input
                     type="number"
-                    className="border rounded px-3 py-2 w-full"
+                    className="input"
                     value={inviteCount}
                     min={1}
                     onChange={(e) => setInviteCount(Number(e.target.value))}
                   />
                 </div>
-                <button className="bg-green-600 text-white px-4 py-2 rounded w-full sm:w-auto" type="submit">
+                <button className="btn btn-success w-full sm:w-auto" type="submit">
                   批量生成
                 </button>
               </form>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className="bg-gray-100 text-gray-800 px-3 py-2 rounded text-sm"
+                  className="btn btn-secondary"
                   onClick={toggleSelectAll}
                 >
                   {selectedCodes.length === invites.length ? "取消全选" : "全选"}
                 </button>
                 <button
                   type="button"
-                  className="bg-blue-600 text-white px-3 py-2 rounded text-sm"
+                  className="btn btn-primary"
                   onClick={handleCopySelected}
                   disabled={!selectedCodes.length}
                 >
@@ -438,21 +469,25 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
-            <form className="grid gap-3 sm:flex sm:items-end sm:gap-3" onSubmit={handleCreateSingle}>
-              <div className="sm:flex-1">
-                <label className="block text-sm font-medium mb-1">指定兑换码</label>
-                <input
-                  className="border rounded px-3 py-2 w-full"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                />
-              </div>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto" type="submit">
-                创建
-              </button>
-            </form>
+              <form className="grid gap-3 sm:flex sm:items-end sm:gap-3" onSubmit={handleCreateSingle}>
+                <div className="sm:flex-1">
+                  <label htmlFor="singleCode" className="block text-sm font-medium mb-1">指定兑换码</label>
+                  <input
+                    className="input"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    id="singleCode"
+                  />
+                </div>
+                <button className="btn btn-primary w-full sm:w-auto" type="submit">
+                  创建
+                </button>
+              </form>
 
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            {invites.length === 0 && (
+              <div className="p-6 bg-gray-50 border rounded text-sm text-gray-700">暂无兑换码，先在上方创建或批量生成。</div>
+            )}
+            <div className="overflow-x-auto -mx-4 sm:mx-0 hidden sm:block">
               <div className="min-w-[640px] sm:min-w-0">
                 <table className="w-full text-sm">
                   <thead>
@@ -473,7 +508,7 @@ export default function AdminPage() {
                   </thead>
                   <tbody>
                     {invites.map((invite) => (
-                      <tr key={invite.id} className="border-b">
+                      <tr key={invite.id} className="border-b odd:bg-gray-50">
                         <td className="py-2 px-2">
                           <input
                             type="checkbox"
@@ -490,18 +525,30 @@ export default function AdminPage() {
                             {invite.code}
                           </button>
                         </td>
-                        <td className="py-2 px-2">{invite.used ? "已使用" : "未使用"}</td>
+                        <td className="py-2 px-2">
+                          <span className={`${invite.used ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"} inline-block px-2 py-1 rounded text-xs`}>
+                            {invite.used ? "已使用" : "未使用"}
+                          </span>
+                        </td>
                         <td className="py-2 px-2">
                           {invite.usedAt ? new Date(invite.usedAt).toLocaleString() : "-"}
                         </td>
                         <td className="py-2 px-2">
-                          {invite.enterpriseUser?.userPrincipalName || "-"}
+                          {invite.enterpriseUser?.userPrincipalName ? (
+                            <span className="inline-block px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
+                              {invite.enterpriseUser.userPrincipalName}
+                            </span>
+                          ) : (
+                            "-"
+                          )}
                         </td>
                         <td className="py-2 px-2 text-right">
                           {!invite.used && (
                             <button
                               className="text-red-600 hover:underline"
-                              onClick={() => handleRevoke(invite.code)}
+                              onClick={() => {
+                                if (confirm("确定要作废该兑换码吗？")) handleRevoke(invite.code);
+                              }}
                             >
                               作废
                             </button>
@@ -513,7 +560,48 @@ export default function AdminPage() {
                 </table>
               </div>
             </div>
+            <div className="sm:hidden space-y-3">
+              {invites.map((invite) => (
+                <div key={invite.id} className="border rounded p-3 bg-white">
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      className="font-mono text-sm text-left hover:underline break-words"
+                      onClick={() => handleCopy(invite.code)}
+                    >
+                      {invite.code}
+                    </button>
+                    {!invite.used && (
+                      <button
+                        className="text-red-600 text-sm"
+                        onClick={() => {
+                          if (confirm("确定要作废该兑换码吗？")) handleRevoke(invite.code);
+                        }}
+                      >
+                        作废
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-2 text-xs text-gray-700 space-y-1">
+                    <div>状态：{invite.used ? "已使用" : "未使用"}</div>
+                    <div>使用时间：{invite.usedAt ? new Date(invite.usedAt).toLocaleString() : "-"}</div>
+                    <div>企业账户：{invite.enterpriseUser?.userPrincipalName || "-"}</div>
+                  </div>
+                  <div className="mt-2">
+                    <label className="inline-flex items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={selectedCodes.includes(invite.code)}
+                        onChange={() => toggleSelect(invite.code)}
+                      />
+                      选择
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
+          )}
         </>
       )}
     </div>
