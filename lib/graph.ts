@@ -161,3 +161,26 @@ export async function createEnterpriseUser({
 
   return { graphUserId: user.graphUserId, userPrincipalName, password };
 }
+
+export async function resetEnterpriseUserPassword(graphUserId: string) {
+  const password = generatePassword();
+  const accessToken = await getAdminAccessToken();
+  const res = await fetch(`https://graph.microsoft.com/v1.0/users/${graphUserId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`
+    },
+    body: JSON.stringify({
+      passwordProfile: {
+        forceChangePasswordNextSignIn: true,
+        password
+      }
+    })
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to reset password: ${res.status} ${text}`);
+  }
+  return password;
+}

@@ -56,6 +56,8 @@ export default function AdminPage() {
   >([]);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const unusedCodes = invites.filter((invite) => !invite.used).map((invite) => invite.code);
+  const usedCodes = invites.filter((invite) => invite.used).map((invite) => invite.code);
 
   const fetchWithAuth = useCallback(
     async (input: RequestInfo | URL, initFactory?: () => RequestInit) => {
@@ -232,8 +234,10 @@ export default function AdminPage() {
     fetchConfigAndInvites();
   }
 
-  async function handleRevoke(code: string) {
-    const res = await fetchWithAuth(`/api/admin/invite?code=${code}`, () => ({
+  async function handleDelete(code: string) {
+    setError(null);
+    setMessage(null);
+    const res = await fetchWithAuth(`/api/admin/invite?code=${code}&force=true`, () => ({
       method: "DELETE"
     }));
     if (res.status === 401) {
@@ -243,10 +247,10 @@ export default function AdminPage() {
     }
     if (!res.ok) {
       const body = await res.json();
-      setError(body.error || "作废失败");
+      setError(body.error || "删除失败");
       return;
     }
-    setMessage("兑换码已作废");
+    setMessage("兑换码已删除");
     fetchConfigAndInvites();
   }
 
@@ -279,7 +283,26 @@ export default function AdminPage() {
       setError("请先勾选要复制的兑换码");
       return;
     }
+    setError(null);
     await handleCopy(selectedCodes.join("\n"));
+  }
+
+  async function handleCopyUnused() {
+    if (!unusedCodes.length) {
+      setError("没有未使用的兑换码");
+      return;
+    }
+    setError(null);
+    await handleCopy(unusedCodes.join("\n"));
+  }
+
+  async function handleCopyUsed() {
+    if (!usedCodes.length) {
+      setError("没有已使用的兑换码");
+      return;
+    }
+    setError(null);
+    await handleCopy(usedCodes.join("\n"));
   }
 
   return (
@@ -467,6 +490,22 @@ export default function AdminPage() {
                 >
                   复制选中 ({selectedCodes.length})
                 </button>
+                <button
+                  type="button"
+                  className="bg-indigo-600 text-white px-3 py-2 rounded text-sm"
+                  onClick={handleCopyUnused}
+                  disabled={!unusedCodes.length}
+                >
+                  复制未使用 ({unusedCodes.length})
+                </button>
+                <button
+                  type="button"
+                  className="bg-purple-600 text-white px-3 py-2 rounded text-sm"
+                  onClick={handleCopyUsed}
+                  disabled={!usedCodes.length}
+                >
+                  复制已使用 ({usedCodes.length})
+                </button>
               </div>
             </div>
               <form className="grid gap-3 sm:flex sm:items-end sm:gap-3" onSubmit={handleCreateSingle}>
@@ -543,6 +582,7 @@ export default function AdminPage() {
                           )}
                         </td>
                         <td className="py-2 px-2 text-right">
+<<<<<<< HEAD
                           {!invite.used && (
                             <button
                               className="text-red-600 hover:underline"
@@ -553,6 +593,14 @@ export default function AdminPage() {
                               作废
                             </button>
                           )}
+=======
+                          <button
+                            className="text-red-600 hover:underline"
+                            onClick={() => handleDelete(invite.code)}
+                          >
+                            删除
+                          </button>
+>>>>>>> feeb82c (Add password reset flow and admin copy helpers)
                         </td>
                       </tr>
                     ))}

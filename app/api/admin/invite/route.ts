@@ -5,6 +5,7 @@ import {
   createInviteCode,
   createInviteCodes,
   listInviteCodes,
+  getInviteCodeByCode,
   revokeInviteCode
 } from "@/lib/invite";
 
@@ -49,11 +50,15 @@ export async function DELETE(request: Request) {
   }
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
+  const forceDelete = searchParams.get("force") === "true";
   if (!code) {
     return NextResponse.json({ error: "缺少 code 参数" }, { status: 400 });
   }
   try {
-    const invite = await assertInviteCodeUsable(code);
+    const invite = forceDelete ? await getInviteCodeByCode(code) : await assertInviteCodeUsable(code);
+    if (!invite) {
+      return NextResponse.json({ error: "兑换码不存在" }, { status: 404 });
+    }
     await revokeInviteCode(invite.id);
     return NextResponse.json({ ok: true });
   } catch (err) {

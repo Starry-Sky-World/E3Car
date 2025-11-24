@@ -55,3 +55,7 @@ export async function markInviteUsed(inviteId: number, enterpriseUserId: number)
 export async function revokeInviteCode(id: number) {
   return prisma.inviteCode.delete({ where: { id } });
 }
+
+export async function getInviteCodeByCode(code: string) {
+  return prisma.inviteCode.findUnique({ where: { code } });
+}
