@@ -48,4 +48,25 @@ input, button, textarea, select {
   .link {
     @apply text-blue-700 underline hover:text-blue-800;
   }
+  .badge {
+    @apply inline-block px-2 py-1 rounded text-xs font-medium;
+  }
+  .badge-success {
+    @apply bg-green-100 text-green-700;
+  }
+  .badge-muted {
+    @apply bg-gray-100 text-gray-700;
+  }
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+  .toast {
+    @apply fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-2 rounded shadow z-50;
+  }
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/40 flex items-center justify-center z-50;
+  }
+  .modal {
+    @apply bg-white rounded shadow p-5 w-[90%] sm:w-[420px];
+  }
 }
