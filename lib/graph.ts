@@ -180,7 +180,45 @@ export async function resetEnterpriseUserPassword(graphUserId: string) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Failed to reset password: ${res.status} ${text}`);
+    let friendlyMessage = `Failed to reset password: ${res.status} ${text}`;
+    try {
+      const body = JSON.parse(text) as {
+        error?: { code?: string; message?: string };
+      };
+      if (body.error?.code === "Authorization_RequestDenied") {
+        friendlyMessage =
+          "Graph API 权限不足，无法重置密码。请使用具备全局管理员权限的账号重新在后台进行管理员授权 (User.ReadWrite.All + Directory.ReadWrite.All)。";
+      }
+    } catch {
+      // keep default friendlyMessage
+    }
+    throw new Error(friendlyMessage);
   }
   return password;
+}
+
+export async function refreshAdminGraphToken(force = false) {
+  const token = await getLatestToken();
+  if (!token) {
+    throw new Error("未找到 Graph 授权信息，请先在后台完成管理员授权");
+  }
+  if (!token.refreshToken) {
+    throw new Error("当前 Graph token 缺少 refreshToken，请重新授权");
+  }
+  const shouldRefresh = force || isTokenExpired(token.expiresAt);
+  if (!shouldRefresh) {
+    return { refreshed: false, expiresAt: token.expiresAt };
+  }
+  const config = await getAppConfig();
+  if (!config) {
+    throw new Error("App config is missing. Save Client ID/Secret in admin console.");
+  }
+  const refreshed = await refreshAccessToken({
+    refreshToken: token.refreshToken,
+    clientId: config.clientId,
+    clientSecret: config.clientSecret
+  });
+  const latest = await getLatestToken();
+  const expiresAt = latest?.expiresAt ?? new Date(Date.now() + refreshed.expires_in * 1000);
+  return { refreshed: true, expiresAt };
 }

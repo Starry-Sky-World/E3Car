@@ -3,6 +3,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { exchangeCodeForToken } from "@/lib/oauth";
 
+function buildRedirectUrl(request: Request, path: string) {
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || request.headers.get("host");
+  if (forwardedProto && host) {
+    return new URL(path, `${forwardedProto}://${host}`);
+  }
+  if (host) {
+    const base = new URL(request.url);
+    return new URL(path, `${base.protocol}//${host}`);
+  }
+  return new URL(path, request.url);
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
@@ -12,12 +26,12 @@ export async function GET(request: Request) {
   const storedState = cookieStore.get("oauth_state")?.value;
 
   if (!code || !state || !storedState || state !== storedState) {
-    return NextResponse.redirect(new URL("/admin?error=oauth_state", request.url));
+    return NextResponse.redirect(buildRedirectUrl(request, "/admin?error=oauth_state"));
   }
 
   const config = await prisma.appConfig.findFirst({ orderBy: { id: "desc" } });
   if (!config) {
-    return NextResponse.redirect(new URL("/admin?error=config-missing", request.url));
+    return NextResponse.redirect(buildRedirectUrl(request, "/admin?error=config-missing"));
   }
 
   try {
@@ -26,12 +40,12 @@ export async function GET(request: Request) {
       clientId: config.clientId,
       clientSecret: config.clientSecret
     });
-    const res = NextResponse.redirect(new URL("/admin?success=oauth", request.url));
+    const res = NextResponse.redirect(buildRedirectUrl(request, "/admin?success=oauth"));
     res.cookies.delete("oauth_state");
     return res;
   } catch (err) {
     return NextResponse.redirect(
-      new URL(`/admin?error=${encodeURIComponent((err as Error).message)}`, request.url)
+      buildRedirectUrl(request, `/admin?error=${encodeURIComponent((err as Error).message)}`)
     );
   }
 }
